@@ -14,6 +14,7 @@ from mmdet.apis import multi_gpu_test, single_gpu_test
 from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
 from mmdet.models import build_detector
+from mmdet.models.backbones.repvgg import repvgg_det_model_convert
 
 
 def parse_args():
@@ -84,6 +85,10 @@ def parse_args():
         default='none',
         help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument(
+        '--convert-repvgg', 
+        action='store_true', 
+        help='convert repvgg model')
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -175,6 +180,12 @@ def main():
     if fp16_cfg is not None:
         wrap_fp16_model(model)
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
+
+    if args.convert_repvgg:
+        cfg.model.backbone['deploy'] = True
+        deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+        model = repvgg_det_model_convert(model, deploy_model)
+
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
     # old versions did not save class info in checkpoints, this walkaround is

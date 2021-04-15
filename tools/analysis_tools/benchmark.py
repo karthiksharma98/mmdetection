@@ -11,6 +11,8 @@ from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
 from mmdet.models import build_detector
 
+from mmdet.models.backbones.repvgg import repvgg_det_model_convert
+import numpy as np
 
 def parse_args():
     parser = argparse.ArgumentParser(description='MMDet benchmark a model')
@@ -18,6 +20,10 @@ def parse_args():
     parser.add_argument('checkpoint', help='checkpoint file')
     parser.add_argument(
         '--log-interval', default=50, help='interval of logging')
+    parser.add_argument(
+        '--convert-repvgg', 
+        action='store_true', 
+        help='convert repvgg model')
     parser.add_argument(
         '--fuse-conv-bn',
         action='store_true',
@@ -73,6 +79,12 @@ def main():
     if fp16_cfg is not None:
         wrap_fp16_model(model)
     load_checkpoint(model, args.checkpoint, map_location='cpu')
+
+    if args.convert_repvgg:
+        cfg.model.backbone['deploy'] = True
+        deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+        model = repvgg_det_model_convert(model, deploy_model)
+
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
 
@@ -85,6 +97,7 @@ def main():
     pure_inf_time = 0
 
     # benchmark with 2000 image and take the average
+    runtimes = []
     for i, data in enumerate(data_loader):
 
         torch.cuda.synchronize()
@@ -95,6 +108,8 @@ def main():
 
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - start_time
+
+        runtimes.append(elapsed)
 
         if i >= num_warmup:
             pure_inf_time += elapsed
@@ -107,6 +122,8 @@ def main():
             fps = (i + 1 - num_warmup) / pure_inf_time
             print(f'Overall fps: {fps:.1f} img / s')
             break
+
+    print("Mean runtime (ms): " , 1e3*np.array(runtimes).mean(), ", std= ", 1e3*np.array(runtimes).std())
 
 
 if __name__ == '__main__':
