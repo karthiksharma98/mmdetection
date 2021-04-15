@@ -13,38 +13,30 @@ model = dict(
         out_channels=128,
         num_outs=3),
     bbox_head=dict(
-        type='RetinaHead',
+        type='GFLHead',
         num_classes=80,
         in_channels=128,
-        stacked_convs=4,
+        stacked_convs=2,
         feat_channels=128,
         anchor_generator=dict(
             type='AnchorGenerator',
-            octave_base_scale=4,
-            scales_per_octave=3,
-            ratios=[0.5, 1.0, 2.0],
+            ratios=[1.0],
+            octave_base_scale=8,
+            scales_per_octave=1,
             strides=[8, 16, 32]),
-        bbox_coder=dict(
-            type='DeltaXYWHBBoxCoder',
-            target_means=[.0, .0, .0, .0],
-            target_stds=[1.0, 1.0, 1.0, 1.0]),
         loss_cls=dict(
-            type='FocalLoss',
+            type='QualityFocalLoss',
             use_sigmoid=True,
-            gamma=2.0,
-            alpha=0.25,
+            beta=2.0,
             loss_weight=1.0),
-        loss_bbox=dict(type='L1Loss', loss_weight=1.0)),
+        loss_dfl=dict(type='DistributionFocalLoss', loss_weight=0.25),
+        reg_max=10,
+        loss_bbox=dict(type='GIoULoss', loss_weight=2.0)),
    
     # model training and testing settings
     # training and testing settings
     train_cfg=dict(
-        assigner=dict(
-            type='MaxIoUAssigner',
-            pos_iou_thr=0.5,
-            neg_iou_thr=0.4,
-            min_pos_iou=0,
-            ignore_iof_thr=-1),
+        assigner=dict(type='ATSSAssigner', topk=9),
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
