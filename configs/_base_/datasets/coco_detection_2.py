@@ -3,10 +3,12 @@ data_root = 'data/coco/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFile'),
+    dict(type='LoadImageFromFile', to_float32=True),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(416, 416), keep_ratio=True),
+    dict(type='Resize', img_scale=(416, 416), multiscale_mode='range', ratio_range=(0.5, 1.5)),
+    dict(type='Translate', level=0.2),
     dict(type='RandomFlip', flip_ratio=0.5),
+    dict(type='PhotoMetricDistortion', brightness_delta=0.2, contrast_range=(0.6, 1.4), saturation_range=(0.5, 1.2)),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
@@ -28,7 +30,7 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=32,
+    samples_per_gpu=16,
     workers_per_gpu=1,
     train=dict(
         type=dataset_type,
