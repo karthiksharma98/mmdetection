@@ -1,23 +1,27 @@
+_base_ = [
+    '../_base_/models/repdet_repvgg_pafpn.py',
+    '../_base_/datasets/coco_detection_2.py',
+    '../_base_/schedules/schedule_poly.py', '../_base_/default_runtime.py'
+]
+
 model = dict(
-    type='RepDet',
+    pretrained='/data/kartikes/repvgg_models/repvgg_a0.pth',
     backbone=dict(
-        type='RepVGG',
-        arch=None,
-        out_stages=[2, 3, 4],
-        activation='ReLU',
-        last_channel=512,
-        deploy=False), 
+        arch='A0'
+    ),
     neck=dict(
-        type='PAFPN',
+        type='NanoPAN',
         in_channels=[96, 192, 512],
         out_channels=128,
         num_outs=3),
     bbox_head=dict(
-        type='GFLHead',
+        type='NanoDetHead',
         num_classes=80,
         in_channels=128,
         stacked_convs=2,
         feat_channels=128,
+        share_cls_reg=True,
+        reg_max=10,
         norm_cfg=dict(type='BN', requires_grad=True),
         anchor_generator=dict(
             type='AnchorGenerator',
@@ -31,20 +35,10 @@ model = dict(
             beta=2.0,
             loss_weight=1.0),
         loss_dfl=dict(type='DistributionFocalLoss', loss_weight=0.25),
-        reg_max=10,
         loss_bbox=dict(type='GIoULoss', loss_weight=2.0)),
-   
-    # model training and testing settings
-    # training and testing settings
-    train_cfg=dict(
-        assigner=dict(type='ATSSAssigner', topk=9),
-        allowed_border=-1,
-        pos_weight=-1,
-        debug=False),
-    test_cfg=dict(
-        nms_pre=1000,
-        min_bbox_size=0,
-        score_thr=0.05,
-        nms=dict(type='nms', iou_threshold=0.5),
-        max_per_img=100)
-    )
+)
+optimizer = dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001)
+data = dict(
+    samples_per_gpu=32,
+    workers_per_gpu=1)
+find_unused_parameters=True
