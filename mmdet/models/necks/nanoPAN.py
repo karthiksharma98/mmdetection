@@ -43,10 +43,11 @@ class NanoPAN(FPN):
                  end_level=-1,
                  conv_cfg=None,
                  norm_cfg=None,
-                 act_cfg=None):
+                 act_cfg=None,
+                 **kwargs):
         super(NanoPAN,
               self).__init__(in_channels, out_channels, num_outs, start_level,
-                             end_level, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg)
+                             end_level, conv_cfg=conv_cfg, norm_cfg=norm_cfg, act_cfg=act_cfg, **kwargs)
         self.init_weights()
 
     def forward(self, inputs):

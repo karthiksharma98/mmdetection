@@ -40,6 +40,6 @@ data = dict(
     samples_per_gpu=8,
     workers_per_gpu=1,
 )
-optimizer = dict(type='SGD', lr=0.003, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.007, momentum=0.9, weight_decay=0.0001)
 runner = dict(type='EpochBasedRunner', max_epochs=24)
-resume_from = '/home/kartikes/repo/mmdet_ksharma/work_dirs/repdet_repvgg_b3g4_pafpn_1x_coco/latest.pth'
+load_from = '/home/kartikes/repo/mmdet_ksharma/work_dirs/repdet_repvgg_b3g4_pafpn_1x_coco/latest.pth'
