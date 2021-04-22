@@ -1,5 +1,6 @@
 from .bfp import BFP
 from .channel_mapper import ChannelMapper
+from .dilated_encoder import DilatedEncoder
 from .fpg import FPG
 from .fpn import FPN
 from .fpn_carafe import FPN_CARAFE
@@ -13,5 +14,5 @@ from .nanoPAN import NanoPAN
 
 __all__ = [
     'FPN', 'BFP', 'ChannelMapper', 'HRFPN', 'NASFPN', 'FPN_CARAFE', 'PAFPN',
-    'NASFCOS_FPN', 'RFP', 'YOLOV3Neck', 'FPG', 'NanoPAN'
+    'NASFCOS_FPN', 'RFP', 'YOLOV3Neck', 'FPG', 'NanoPAN', 'DilatedEncoder'
 ]
