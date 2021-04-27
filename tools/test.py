@@ -181,7 +181,9 @@ def main():
         wrap_fp16_model(model)
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
 
+    print("Convert ?" , args.convert_repvgg)
     if args.convert_repvgg:
+        print("Converting revpgg model")
         cfg.model.backbone['deploy'] = True
         deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
         model = repvgg_det_model_convert(model, deploy_model)

@@ -1,3 +1,5 @@
+from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+
 import argparse
 import time
 
@@ -80,7 +82,9 @@ def main():
         wrap_fp16_model(model)
     load_checkpoint(model, args.checkpoint, map_location='cpu')
 
+    print("Convert ?" , args.convert_repvgg)
     if args.convert_repvgg:
+        "Converting repvgg model"
         cfg.model.backbone['deploy'] = True
         deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
         model = repvgg_det_model_convert(model, deploy_model)
@@ -123,6 +127,8 @@ def main():
             print(f'Overall fps: {fps:.1f} img / s')
             break
 
+    print("Writing timings to ", 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
+    export_timings(model, 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
     print("Mean runtime (ms): " , 1e3*np.array(runtimes).mean(), ", std= ", 1e3*np.array(runtimes).std())
 
 
