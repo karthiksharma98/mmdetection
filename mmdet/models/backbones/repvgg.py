@@ -274,6 +274,7 @@ def repvgg_model_convert(model, deploy_model, save_path=None):
 
 
 def repvgg_det_model_convert(model, deploy_model):
+    print("repvgg_det_model_convert: Converting repvgg model")
     converted_weights = {}
     deploy_model.load_state_dict(model.state_dict(), strict=False)
     for name, module in model.backbone.named_modules():
