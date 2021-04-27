@@ -39,6 +39,6 @@ model = dict(
 )
 optimizer = dict(type='SGD', lr=0.07, momentum=0.9, weight_decay=0.0001)
 data = dict(
-    samples_per_gpu=42,
-    workers_per_gpu=1)
+    samples_per_gpu=4,
+    workers_per_gpu=2)
 find_unused_parameters=True

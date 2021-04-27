@@ -2,30 +2,40 @@ import torch
 
 from ..builder import BBOX_ASSIGNERS
 from ..iou_calculators import build_iou_calculator
+from ..transforms import bbox_xyxy_to_cxcywh
 from .assign_result import AssignResult
 from .base_assigner import BaseAssigner
 
 
-def box_xyxy_to_cxcywh(x):
-    x0, y0, x1, y1 = x.unbind(-1)
-    b = [(x0 + x1) / 2, (y0 + y1) / 2, (x1 - x0), (y1 - y0)]
-    return torch.stack(b, dim=-1)
-
-
 @BBOX_ASSIGNERS.register_module()
 class UniformAssigner(BaseAssigner):
+    """Uniform Matching between the anchors and gt boxes, which can achieve
+    balance in positive anchors, and gt_bboxes_ignore was not considered for
+    now.
+    Args:
+        pos_ignore_thr (float): the threshold to ignore positive anchors
+        neg_ignore_thr (float): the threshold to ignore negative anchors
+        match_times(int): Number of positive anchors for each gt box.
+           Default 4.
+        iou_calculator (dict): iou_calculator config
+    """
 
     def __init__(self,
-                 pos_ignore_thresh,
-                 neg_ignore_thresh,
+                 pos_ignore_thr,
+                 neg_ignore_thr,
                  match_times=4,
                  iou_calculator=dict(type='BboxOverlaps2D')):
         self.match_times = match_times
-        self.pos_ignore_thresh = pos_ignore_thresh
-        self.neg_ignore_thresh = neg_ignore_thresh
+        self.pos_ignore_thr = pos_ignore_thr
+        self.neg_ignore_thr = neg_ignore_thr
         self.iou_calculator = build_iou_calculator(iou_calculator)
 
-    def assign(self, bbox_pred, anchor, gt_bboxes, gt_labels, img_meta):
+    def assign(self,
+               bbox_pred,
+               anchor,
+               gt_bboxes,
+               gt_bboxes_ignore=None,
+               gt_labels=None):
         num_gts, num_bboxes = gt_bboxes.size(0), bbox_pred.size(0)
 
         # 1. assign -1 by default
@@ -40,49 +50,65 @@ class UniformAssigner(BaseAssigner):
             if num_gts == 0:
                 # No ground truth, assign all to background
                 assigned_gt_inds[:] = 0
-            return AssignResult(
+            assign_result = AssignResult(
                 num_gts, assigned_gt_inds, None, labels=assigned_labels)
+            assign_result.set_extra_property(
+                'pos_idx', bbox_pred.new_empty(0, dtype=torch.bool))
+            assign_result.set_extra_property('pos_predicted_boxes',
+                                             bbox_pred.new_empty((0, 4)))
+            assign_result.set_extra_property('target_boxes',
+                                             bbox_pred.new_empty((0, 4)))
+            return assign_result
 
-        # Compute the L1 cost between boxes
+        # 2. Compute the L1 cost between boxes
         # Note that we use anchors and predict boxes both
         cost_bbox = torch.cdist(
-            box_xyxy_to_cxcywh(bbox_pred), box_xyxy_to_cxcywh(gt_bboxes), p=1)
+            bbox_xyxy_to_cxcywh(bbox_pred),
+            bbox_xyxy_to_cxcywh(gt_bboxes),
+            p=1)
         cost_bbox_anchors = torch.cdist(
-            box_xyxy_to_cxcywh(anchor), box_xyxy_to_cxcywh(gt_bboxes), p=1)
+            bbox_xyxy_to_cxcywh(anchor), bbox_xyxy_to_cxcywh(gt_bboxes), p=1)
 
-        # Final cost matrix
-        C = cost_bbox
-        C1 = cost_bbox_anchors
+        # We found that topk function has different results in cpu and
+        # cuda mode. In order to ensure consistency with the source code,
+        # we also use cpu mode.
+        # TODO: Check whether the performance of cpu and cuda are the same.
+        C = cost_bbox.cpu()
+        C1 = cost_bbox_anchors.cpu()
 
         # self.match_times x n
-        indices = torch.topk(
+        index = torch.topk(
             C,  # c=b,n,x c[i]=n,x
             k=self.match_times,
             dim=0,
             largest=False)[1]
 
         # self.match_times x n
-        indices1 = torch.topk(C1, k=self.match_times, dim=0, largest=False)[1]
+        index1 = torch.topk(C1, k=self.match_times, dim=0, largest=False)[1]
         # (self.match_times*2) x n
-        indeices = torch.cat((indices, indices1), dim=0)
+        indexes = torch.cat((index, index1),
+                            dim=1).reshape(-1).to(bbox_pred.device)
 
         pred_overlaps = self.iou_calculator(bbox_pred, gt_bboxes)
         anchor_overlaps = self.iou_calculator(anchor, gt_bboxes)
-
-        pred_max_overlaps, pred_argmax_overlaps = pred_overlaps.max(dim=1)
+        pred_max_overlaps, _ = pred_overlaps.max(dim=1)
         anchor_max_overlaps, _ = anchor_overlaps.max(dim=0)
-        ignore_idx = pred_max_overlaps > self.neg_ignore_thresh
+
+        # 3. Compute the ignore indexes use gt_bboxes and predict boxes
+        ignore_idx = pred_max_overlaps > self.neg_ignore_thr
         assigned_gt_inds[ignore_idx] = -1
 
-        pos_ious = torch.gather(anchor_overlaps, 0, indeices)
+        # 4. Compute the ignore indexes of positive sample use anchors
+        # and predict boxes
         pos_gt_index = torch.arange(
-            0, pos_ious.size(1), device=pos_ious.device).expand_as(pos_ious)
-        pos_ious = pos_ious.view(-1)
-        indeices = indeices.view(-1)
-        pos_gt_index = pos_gt_index.reshape(-1)
-        pos_idx = pos_ious >= self.pos_ignore_thresh
-        assigned_gt_inds[indeices[pos_idx]] = pos_gt_index[pos_idx] + 1
-        assigned_gt_inds[indeices[~pos_idx]] = -1
+            0, C1.size(1),
+            device=bbox_pred.device).repeat(self.match_times * 2)
+        pos_ious = anchor_overlaps[indexes, pos_gt_index]
+        pos_ignore_idx = pos_ious < self.pos_ignore_thr
+
+        pos_gt_index_with_ignore = pos_gt_index + 1
+        pos_gt_index_with_ignore[pos_ignore_idx] = -1
+        assigned_gt_inds[indexes] = pos_gt_index_with_ignore
 
         if gt_labels is not None:
             assigned_labels = assigned_gt_inds.new_full((num_bboxes, ), -1)
@@ -94,8 +120,14 @@ class UniformAssigner(BaseAssigner):
         else:
             assigned_labels = None
 
-        return AssignResult(
+        assign_result = AssignResult(
             num_gts,
             assigned_gt_inds,
             anchor_max_overlaps,
             labels=assigned_labels)
+        assign_result.set_extra_property('pos_idx', ~pos_ignore_idx)
+        assign_result.set_extra_property('pos_predicted_boxes',
+                                         bbox_pred[indexes])
+        assign_result.set_extra_property('target_boxes',
+                                         gt_bboxes[pos_gt_index])
+        return assign_result

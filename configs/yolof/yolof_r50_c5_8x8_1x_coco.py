@@ -33,7 +33,9 @@ model = dict(
         bbox_coder=dict(
             type='DeltaXYWHBBoxCoder',
             target_means=[.0, .0, .0, .0],
-            target_stds=[1., 1., 1., 1.]),
+            target_stds=[1., 1., 1., 1.],
+            add_ctr_clamp=True,
+            ctr_clamp=32),
         loss_cls=dict(
             type='FocalLoss',
             use_sigmoid=True,
@@ -44,9 +46,7 @@ model = dict(
     # training and testing settings
     train_cfg=dict(
         assigner=dict(
-            type='UniformAssigner',
-            pos_ignore_thresh=0.15,
-            neg_ignore_thresh=0.7),
+            type='UniformAssigner', pos_ignore_thr=0.15, neg_ignore_thr=0.7),
         allowed_border=-1,
         pos_weight=-1,
         debug=False),
@@ -63,8 +63,7 @@ optimizer = dict(
     momentum=0.9,
     weight_decay=0.0001,
     paramwise_cfg=dict(
-        norm_decay_mult=0.,
-        custom_keys={'backbone': dict(lr_mult=0.334, decay_mult=1.0)}))
+        norm_decay_mult=0., custom_keys={'backbone': dict(lr_mult=1. / 3)}))
 lr_config = dict(warmup_iters=1500, warmup_ratio=0.00066667)
 
 # use caffe img_norm
@@ -75,16 +74,11 @@ train_pipeline = [
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='RandomShift'),
+    dict(type='RandomShift', shift_ratio=0.5, max_shift_px=32),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
-    dict(
-        type='Collect',
-        keys=['img', 'gt_bboxes', 'gt_labels'],
-        meta_keys=('filename', 'ori_filename', 'ori_shape', 'img_shape',
-                   'pad_shape', 'scale_factor', 'flip', 'flip_direction',
-                   'img_norm_cfg', 'img')),  # meta_keys新增‘img’，用于可视化调试
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
@@ -103,7 +97,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=8,
-    workers_per_gpu=1,
+    workers_per_gpu=8,
     train=dict(pipeline=train_pipeline),
     val=dict(pipeline=test_pipeline),
     test=dict(pipeline=test_pipeline))
