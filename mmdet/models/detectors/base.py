@@ -1,3 +1,6 @@
+from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+set_global_sync(True)
+
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 
@@ -153,6 +156,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
             return self.aug_test(imgs, img_metas, **kwargs)
 
     @auto_fp16(apply_to=('img', ))
+    @time_this()
     def forward(self, img, img_metas, return_loss=True, **kwargs):
         """Calls either :func:`forward_train` or :func:`forward_test` depending
         on whether ``return_loss`` is ``True``.

@@ -1,4 +1,4 @@
-from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+from nntime import export_timings
 
 import argparse
 import time
@@ -128,7 +128,7 @@ def main():
             break
 
     print("Writing timings to ", 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
-    export_timings(model, 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
+    export_timings(model, 'timings/timings_' + args.config.split("/")[-1][:-3] + '.csv')
     print("Mean runtime (ms): " , 1e3*np.array(runtimes).mean(), ", std= ", 1e3*np.array(runtimes).std())
 
 
