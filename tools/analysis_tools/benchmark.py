@@ -92,6 +92,9 @@ def main():
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
 
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print("Total parameters = ", pytorch_total_params)
+
     model = MMDataParallel(model, device_ids=[0])
 
     model.eval()

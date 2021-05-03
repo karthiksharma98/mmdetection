@@ -38,13 +38,13 @@ class SingleStageDetector(BaseDetector):
     def extract_feat(self, img):
         """Directly extract features from the backbone+neck."""
 
-        timer_start(self, 'backbone')
+        # timer_start(self, 'backbone')
         x = self.backbone(img)
-        timer_end(self, 'backbone')
+        # timer_end(self, 'backbone')
         if self.with_neck:
-            timer_start(self, 'neck')
+            # timer_start(self, 'neck')
             x = self.neck(x)
-            timer_end(self, 'neck')
+            # timer_end(self, 'neck')
         return x
 
     def forward_dummy(self, img):
@@ -101,11 +101,11 @@ class SingleStageDetector(BaseDetector):
                 corresponds to each class.
         """
         x = self.extract_feat(img)
-        timer_start(self, 'head')
+        # timer_start(self, 'head')
         outs = self.bbox_head(x)
-        timer_end(self, 'head')
+        # timer_end(self, 'head')
 
-        timer_start(self, 'post-proc')
+        # timer_start(self, 'post-proc')
         # get origin input shape to support onnx dynamic shape
         if torch.onnx.is_in_onnx_export():
             # get shape as tensor
@@ -121,7 +121,7 @@ class SingleStageDetector(BaseDetector):
             bbox2result(det_bboxes, det_labels, self.bbox_head.num_classes)
             for det_bboxes, det_labels in bbox_list
         ]
-        timer_end(self, 'post-proc')
+        # timer_end(self, 'post-proc')
         return bbox_results
 
     def aug_test(self, imgs, img_metas, rescale=False):

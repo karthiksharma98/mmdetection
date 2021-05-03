@@ -178,7 +178,8 @@ class RepVGG(nn.Module):
                  out_stages=(1, 2, 3, 4),
                  activation='ReLU',
                  deploy=False,
-                 last_channel=None):
+                 last_channel=None,
+                 freeze_first_stage=False):
         super(RepVGG, self).__init__()
         model_name = 'RepVGG-' + arch
         num_blocks = model_param[model_name]['num_blocks']
@@ -201,6 +202,11 @@ class RepVGG(nn.Module):
         self.stage3 = self._make_stage(int(256 * width_multiplier[2]), num_blocks[2], stride=2)
         out_planes = last_channel if last_channel else int(512 * width_multiplier[3])
         self.stage4 = self._make_stage(out_planes, num_blocks[3], stride=2)
+
+        if freeze_first_stage:
+            self.stage1.eval()
+            for param in self.stage1.parameters():
+                param.requires_grad = False
 
     def _make_stage(self, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
