@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+#timings
+timings
+timings/*
+
 # Distribution / packaging
 .Python
 build/

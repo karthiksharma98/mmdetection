@@ -1,19 +1,22 @@
 _base_ = [
+    '../_base_/datasets/coco_detection.py',
     '../_base_/schedules/schedule_poly.py', '../_base_/default_runtime.py'
 ]
+
+# model settings
 model = dict(
     type='RepDet',
-    pretrained='/data/kartikes/repvgg_models/repvgg_a2.pth',
+    pretrained='/data/kartikes/repvgg_models/repvgg_b1g2.pth',
     backbone=dict(
         type='RepVGG',
-        arch='A2',
-        out_stages=[1, 2, 3, 4],
+        arch='B1g4',
+        out_stages=[4],
         activation='ReLU',
-        last_channel=1024,
+        last_channel=2048,
         deploy=False), 
     neck=dict(
         type='DilatedEncoder',
-        in_channels=1024,
+        in_channels=2048,
         out_channels=512,
         block_mid_channels=128,
         num_residual_blocks=4),
@@ -56,7 +59,7 @@ model = dict(
 # optimizer
 optimizer = dict(
     type='SGD',
-    lr=0.075,
+    lr=0.12,
     momentum=0.9,
     weight_decay=0.0001,
     paramwise_cfg=dict(
@@ -64,27 +67,27 @@ optimizer = dict(
         custom_keys={'backbone': dict(lr_mult=0.334, decay_mult=1.0)}))
 lr_config = dict(warmup_iters=1500, warmup_ratio=0.00066667)
 
+# data
 dataset_type = 'CocoDataset'
 data_root = 'data/coco/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
-    dict(type='LoadImageFromFile', to_float32=True),
+    dict(type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
-    dict(type='Resize', img_scale=(1330, 800), multiscale_mode='range', ratio_range=(0.5, 1.5)),
-    dict(type='Translate', level=0.2),
+    dict(type='Resize', img_scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
-    dict(type='PhotoMetricDistortion', brightness_delta=0.2, contrast_range=(0.6, 1.4), saturation_range=(0.5, 1.2)),
+    dict(type='RandomShift', shift_ratio=0.5, max_shift_px=32),
     dict(type='Normalize', **img_norm_cfg),
     dict(type='Pad', size_divisor=32),
     dict(type='DefaultFormatBundle'),
-    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels']),
+    dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(1330, 800),
+        img_scale=(1333, 800),
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -96,8 +99,8 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    samples_per_gpu=4,
-    workers_per_gpu=4,
+    samples_per_gpu=8,
+    workers_per_gpu=8,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/instances_train2017.json',
@@ -115,4 +118,4 @@ data = dict(
         pipeline=test_pipeline))
 evaluation = dict(interval=1, metric='bbox')
 find_unused_parameters=True
-runner = dict(type='EpochBasedRunner', max_epochs=72)
+runner = dict(type='EpochBasedRunner', max_epochs=12)
