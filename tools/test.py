@@ -7,8 +7,7 @@ import torch
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
-from mmcv.runner import (get_dist_info, init_dist, load_checkpoint,
-                         wrap_fp16_model)
+from mmcv.runner import get_dist_info, init_dist, load_checkpoint #, wrap_fp16_model
 
 from mmdet.apis import multi_gpu_test, single_gpu_test
 from mmdet.datasets import (build_dataloader, build_dataset,
@@ -40,6 +39,8 @@ def parse_args():
         nargs='+',
         help='evaluation metrics, which depends on the dataset, e.g., "bbox",'
         ' "segm", "proposal" for COCO, and "mAP", "recall" for PASCAL VOC')
+    parser.add_argument(
+        '--eval-out', help='file to write evaluation output')
     parser.add_argument('--show', action='store_true', help='show results')
     parser.add_argument(
         '--show-dir', help='directory where painted images will be saved')
@@ -79,6 +80,7 @@ def parse_args():
         action=DictAction,
         help='custom options for evaluation, the key-value pair in xxx=yyy '
         'format will be kwargs for dataset.evaluate() function')
+    parser.add_argument('--img_size', type=int, default=0)
     parser.add_argument(
         '--launcher',
         choices=['none', 'pytorch', 'slurm', 'mpi'],
@@ -101,6 +103,24 @@ def parse_args():
         warnings.warn('--options is deprecated in favor of --eval-options')
         args.eval_options = args.options
     return args
+
+def wrap_fp16_model(model):
+    """Wrap the FP32 model to FP16.
+
+    1. Convert FP32 model to FP16.
+    -- Remain some necessary layers to be FP32, e.g., normalization layers.
+
+    Args:
+        model (nn.Module): Model in FP32.
+    """
+    # convert model to fp16
+    model.half()
+    # patch the normalization layers to make it work in fp32 mode
+    # patch_norm_fp32(model)
+    # set `fp16_enabled` flag
+    for m in model.modules():
+        if hasattr(m, 'fp16_enabled'):
+            m.fp16_enabled = True
 
 
 def main():
@@ -142,6 +162,14 @@ def main():
     # in case the test dataset is concatenated
     samples_per_gpu = 1
     if isinstance(cfg.data.test, dict):
+        # specify manual img_size
+        if args.img_size != 0:
+            test_pipeline = cfg.data.test.pipeline
+            for d in test_pipeline:
+                if 'img_scale' in d:
+                    d['img_scale'] = (args.img_size, args.img_size)
+            cfg.data.test.pipeline = test_pipeline
+
         cfg.data.test.test_mode = True
         samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
         if samples_per_gpu > 1:
@@ -165,6 +193,7 @@ def main():
         init_dist(args.launcher, **cfg.dist_params)
 
     # build the dataloader
+    print(cfg.data.test)
     dataset = build_dataset(cfg.data.test)
     data_loader = build_dataloader(
         dataset,
@@ -176,9 +205,6 @@ def main():
     # build the model and load checkpoint
     cfg.model.train_cfg = None
     model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
-    fp16_cfg = cfg.get('fp16', None)
-    if fp16_cfg is not None:
-        wrap_fp16_model(model)
     checkpoint = load_checkpoint(model, args.checkpoint, map_location='cpu')
 
     print("Convert ?" , args.convert_repvgg)
@@ -190,6 +216,11 @@ def main():
 
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
+
+    fp16_cfg = cfg.get('fp16', None)
+    if fp16_cfg is not None:
+        wrap_fp16_model(model)
+
     # old versions did not save class info in checkpoints, this walkaround is
     # for backward compatibility
     if 'CLASSES' in checkpoint.get('meta', {}):
@@ -226,7 +257,15 @@ def main():
             ]:
                 eval_kwargs.pop(key, None)
             eval_kwargs.update(dict(metric=args.eval, **kwargs))
-            print(dataset.evaluate(outputs, **eval_kwargs))
+            a = dataset.evaluate(outputs, **eval_kwargs)
+            print(a)
+            if args.eval_out:
+                with open(args.eval_out, "a") as eval_out:
+                    print("\n")
+                    print(args.config, "img_size=", args.img_size if args.img_size != 0 else "1333,800", file=eval_out)
+                    print(a, file=eval_out)
+                    print("\n", file=eval_out)
+
 
 
 if __name__ == '__main__':

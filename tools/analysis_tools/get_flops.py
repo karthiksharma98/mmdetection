@@ -5,6 +5,8 @@ from mmcv import Config, DictAction
 
 from mmdet.models import build_detector
 
+from mmdet.models.backbones.repvgg import repvgg_det_model_convert
+
 try:
     from mmcv.cnn import get_model_complexity_info
 except ImportError:
@@ -20,6 +22,10 @@ def parse_args():
         nargs='+',
         default=[1280, 800],
         help='input image size')
+    parser.add_argument(
+        '--convert-repvgg', 
+        action='store_true', 
+        help='convert repvgg model')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
@@ -57,6 +63,13 @@ def main():
         cfg.model,
         train_cfg=cfg.get('train_cfg'),
         test_cfg=cfg.get('test_cfg'))
+
+    if args.convert_repvgg:
+        "Converting repvgg model"
+        cfg.model.backbone['deploy'] = True
+        deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+        model = repvgg_det_model_convert(model, deploy_model)
+
     if torch.cuda.is_available():
         model.cuda()
     model.eval()

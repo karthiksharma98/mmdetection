@@ -124,7 +124,12 @@ class YOLOFHead(AnchorHead):
         bbox_reg = self.bbox_pred(reg_feat)
         objectness = self.object_pred(reg_feat)
 
-        # implicit objectness
+        # # implicit objectness
+        if self.fp16_enabled:
+            INF = 6.55e4
+        else:
+            INF = 1e8
+
         objectness = objectness.view(N, -1, 1, H, W)
         normalized_cls_score = cls_score + objectness - torch.log(
             1. + torch.clamp(cls_score.exp(), max=INF) +
