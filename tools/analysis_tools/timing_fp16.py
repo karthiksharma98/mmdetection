@@ -15,14 +15,12 @@ import numpy as np
 import torch
 from mmcv import Config, DictAction
 from mmcv.cnn import fuse_conv_bn
-from mmcv.parallel import MMDataParallel
 from mmcv.runner import load_checkpoint #, wrap_fp16_model
 from mmdet.models.backbones.repvgg import repvgg_det_model_convert
 
 from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
 from mmdet.models import build_detector
-from mmdet.core import encode_mask_results
 
 
 def print_stats(var, name='', fmt='%.3g', cvt=lambda x: x, file=None):

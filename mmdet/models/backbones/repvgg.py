@@ -179,7 +179,8 @@ class RepVGG(nn.Module):
                  activation='ReLU',
                  deploy=False,
                  last_channel=None,
-                 freeze_first_stage=False):
+                 freeze_first_stage=False,
+                 pretrained=None):
         super(RepVGG, self).__init__()
         model_name = 'RepVGG-' + arch
         num_blocks = model_param[model_name]['num_blocks']
@@ -189,6 +190,7 @@ class RepVGG(nn.Module):
         self.activation = activation
         self.deploy = deploy
         self.override_groups_map = model_param[model_name]['override_groups_map'] or dict()
+        self.pretrained = pretrained
 
         assert 0 not in self.override_groups_map
 
@@ -230,17 +232,17 @@ class RepVGG(nn.Module):
                 output.append(x)
         return tuple(output)
     
-    def init_weights(self, pretrained=None):
+    def init_weights(self):
         """Initialize the weights in backbone.
 
         Args:
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
         """
-        if isinstance(pretrained, str):
+        if isinstance(self.pretrained, str):
             logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
-        elif pretrained is None:
+            load_checkpoint(self, self.pretrained, strict=False, logger=logger)
+        elif self.pretrained is None:
             for m in self.modules():
                 print(m)
                 if isinstance(m, nn.Conv2d):
