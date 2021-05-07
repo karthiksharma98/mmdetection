@@ -9,6 +9,8 @@ __pycache__/
 #timings
 timings
 timings/*
+map_*.txt
+latency_*.txt
 
 # Distribution / packaging
 .Python
