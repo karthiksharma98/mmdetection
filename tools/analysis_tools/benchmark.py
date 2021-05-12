@@ -111,7 +111,7 @@ def main():
     pytorch_total_params = sum(p.numel() for p in model.parameters())
     print("Total parameters = ", pytorch_total_params)
 
-    model = MMDataParallel(model, device_ids=[0])
+    model = model.to('cuda')
 
     model.eval()
 
@@ -120,8 +120,16 @@ def main():
     pure_inf_time = 0
 
     # benchmark with 2000 image and take the average
+    def process_dc(data):
+        n = len(data['img_metas'])
+        for i in range(n):
+            data['img_metas'][i] = data['img_metas'][i].data[0]
+        return data
+
     runtimes = []
     for i, data in enumerate(data_loader):
+        data = process_dc(data)
+        data['img'][0] = data['img'][0].to('cuda')
 
         torch.cuda.synchronize()
         start_time = time.perf_counter()
