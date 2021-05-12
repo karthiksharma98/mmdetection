@@ -1,5 +1,5 @@
-from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
-set_global_sync(True)
+# from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+# set_global_sync(True)
 
 import torch
 
