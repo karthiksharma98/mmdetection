@@ -1,3 +1,6 @@
+# from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+# set_global_sync(True)
+
 from abc import ABCMeta, abstractmethod
 from collections import OrderedDict
 
@@ -106,6 +109,7 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
         else:
             raise NotImplementedError
 
+    # @time_this()
     def forward_test(self, imgs, img_metas, **kwargs):
         """
         Args:
