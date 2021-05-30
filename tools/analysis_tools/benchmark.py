@@ -1,4 +1,5 @@
-from nntime import set_global_sync, time_this, timer_start, timer_end, export_timings
+from ast import parse
+from nntime import export_timings
 
 import argparse
 import time
@@ -27,6 +28,8 @@ def parse_args():
         action='store_true', 
         help='convert repvgg model')
     parser.add_argument(
+        '--eval-out', help='file to write evaluation output')
+    parser.add_argument(
         '--fuse-conv-bn',
         action='store_true',
         help='Whether to fuse conv and bn, this will slightly increase'
@@ -41,13 +44,16 @@ def parse_args():
         'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
         'Note that the quotation marks are necessary and that no white space '
         'is allowed.')
+    parser.add_argument('--img_size', type=int, default=0)
+    parser.add_argument('--gpus', type=int, default=0)
+    parser.add_argument('--deploy_neck', action='store_true', help='whether deploy neck')
+    parser.add_argument('--deploy_head', action='store_true', help='whether deploy head')
     args = parser.parse_args()
     return args
 
 
 def main():
     args = parse_args()
-
     cfg = Config.fromfile(args.config)
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
@@ -60,6 +66,16 @@ def main():
         torch.backends.cudnn.benchmark = True
     cfg.model.pretrained = None
     cfg.data.test.test_mode = True
+
+    if isinstance(cfg.data.test, dict):
+        # specify manual img_size
+        if args.img_size != 0:
+            print("Scaling images to ", args.img_size)
+            test_pipeline = cfg.data.test.pipeline
+            for d in test_pipeline:
+                if 'img_scale' in d:
+                    d['img_scale'] = (args.img_size, args.img_size)
+            cfg.data.test.pipeline = test_pipeline
 
     # build the dataloader
     samples_per_gpu = cfg.data.test.pop('samples_per_gpu', 1)
@@ -77,22 +93,30 @@ def main():
     # build the model and load checkpoint
     cfg.model.train_cfg = None
     model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
-    fp16_cfg = cfg.get('fp16', None)
-    if fp16_cfg is not None:
-        wrap_fp16_model(model)
     load_checkpoint(model, args.checkpoint, map_location='cpu')
 
-    print("Convert ?" , args.convert_repvgg)
+    print("CUDA = ? " , torch.cuda.is_available())
+    torch.cuda.set_device(f'cuda:{args.gpus}')
+
     if args.convert_repvgg:
-        "Converting repvgg model"
+        print("Converting repvgg model")
         cfg.model.backbone['deploy'] = True
+        cfg.model.neck['deploy'] = True
         deploy_model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
-        model = repvgg_det_model_convert(model, deploy_model)
+        model = repvgg_det_model_convert(model, deploy_model, deploy_backbone=True, deploy_neck=args.deploy_neck, deploy_head=args.deploy_head)
 
     if args.fuse_conv_bn:
         model = fuse_conv_bn(model)
 
-    model = MMDataParallel(model, device_ids=[0])
+    fp16_cfg = cfg.get('fp16', None)
+    if fp16_cfg is not None:
+        print("Converting model to fp16")
+        wrap_fp16_model(model)
+
+    pytorch_total_params = sum(p.numel() for p in model.parameters())
+    print("Total parameters = ", pytorch_total_params)
+
+    model = model.to('cuda')
 
     model.eval()
 
@@ -101,8 +125,16 @@ def main():
     pure_inf_time = 0
 
     # benchmark with 2000 image and take the average
+    def process_dc(data):
+        n = len(data['img_metas'])
+        for i in range(n):
+            data['img_metas'][i] = data['img_metas'][i].data[0]
+        return data
+
     runtimes = []
     for i, data in enumerate(data_loader):
+        data = process_dc(data)
+        data['img'][0] = data['img'][0].to('cuda')
 
         torch.cuda.synchronize()
         start_time = time.perf_counter()
@@ -119,18 +151,25 @@ def main():
             pure_inf_time += elapsed
             if (i + 1) % args.log_interval == 0:
                 fps = (i + 1 - num_warmup) / pure_inf_time
-                print(f'Done image [{i + 1:<3}/ 2000], fps: {fps:.1f} img / s')
+                print(f'Done image [{i + 1:<3}/ 100], fps: {fps:.1f} img / s')
 
-        if (i + 1) == 2000:
+        if (i + 1) == 100:
             pure_inf_time += elapsed
             fps = (i + 1 - num_warmup) / pure_inf_time
             print(f'Overall fps: {fps:.1f} img / s')
             break
 
-    print("Writing timings to ", 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
-    export_timings(model, 'timings_' + args.config.split("/")[-1][:-3] + '.csv')
+    img_str = str(args.img_size) if args.img_size != 0 else "1333x800"
+    print("Writing timings to ", 'timings/timings_' + args.config.split("/")[-1][:-3] + '_' + img_str + '.csv')
+    export_timings(model, 'timings/timings_' + args.config.split("/")[-1][:-3] + '_' + img_str + '.csv')
     print("Mean runtime (ms): " , 1e3*np.array(runtimes).mean(), ", std= ", 1e3*np.array(runtimes).std())
 
+    if args.eval_out:
+        with open(args.eval_out, "a") as eval_out:
+            print("\n")
+            print(args.config, "img_size=", args.img_size if args.img_size != 0 else "1333,800", file=eval_out)
+            print("Mean runtime (ms): " , 1e3*np.array(runtimes).mean(), ", std= ", 1e3*np.array(runtimes).std(), file=eval_out)
+            print("\n", file=eval_out)
 
 if __name__ == '__main__':
     main()

@@ -5,19 +5,16 @@ import mmcv
 import numpy as np
 import torch
 import torch.distributed as dist
-import torch.nn as nn
-from mmcv.runner import auto_fp16
-from mmcv.utils import print_log
+from mmcv.runner import BaseModule, auto_fp16
 
 from mmdet.core.visualization import imshow_det_bboxes
-from mmdet.utils import get_root_logger
 
 
-class BaseDetector(nn.Module, metaclass=ABCMeta):
+class BaseDetector(BaseModule, metaclass=ABCMeta):
     """Base class for detectors."""
 
-    def __init__(self):
-        super(BaseDetector, self).__init__()
+    def __init__(self, init_cfg=None):
+        super(BaseDetector, self).__init__(init_cfg)
         self.fp16_enabled = False
 
     @property
@@ -51,11 +48,9 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def extract_feats(self, imgs):
         """Extract features from multiple images.
-
         Args:
             imgs (list[torch.Tensor]): A list of images. The images are
                 augmented from the same image but in different ways.
-
         Returns:
             list[torch.Tensor]: Features of different images
         """
@@ -92,17 +87,6 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
     def aug_test(self, imgs, img_metas, **kwargs):
         """Test function with test time augmentation."""
         pass
-
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in detector.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-        if pretrained is not None:
-            logger = get_root_logger()
-            print_log(f'load model from: {pretrained}', logger=logger)
 
     async def aforward_test(self, *, img, img_metas, **kwargs):
         for var, name in [(img, 'img'), (img_metas, 'img_metas')]:
@@ -170,7 +154,6 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
     def forward(self, img, img_metas, return_loss=True, **kwargs):
         """Calls either :func:`forward_train` or :func:`forward_test` depending
         on whether ``return_loss`` is ``True``.
-
         Note this setting will change the expected inputs. When
         ``return_loss=True``, img and img_meta are single-nested (i.e. Tensor
         and List[dict]), and when ``resturn_loss=False``, img and img_meta
@@ -184,11 +167,9 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def _parse_losses(self, losses):
         """Parse the raw outputs (losses) of the network.
-
         Args:
             losses (dict): Raw output of the network, which usually contain
                 losses and other necessary infomation.
-
         Returns:
             tuple[Tensor, dict]: (loss, log_vars), loss is the loss tensor \
                 which may be a weighted sum of all losses, log_vars contains \
@@ -219,23 +200,19 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def train_step(self, data, optimizer):
         """The iteration step during training.
-
         This method defines an iteration step during training, except for the
         back propagation and optimizer updating, which are done in an optimizer
         hook. Note that in some complicated cases or models, the whole process
         including back propagation and optimizer updating is also defined in
         this method, such as GAN.
-
         Args:
             data (dict): The output of dataloader.
             optimizer (:obj:`torch.optim.Optimizer` | dict): The optimizer of
                 runner is passed to ``train_step()``. This argument is unused
                 and reserved.
-
         Returns:
             dict: It should contain at least 3 keys: ``loss``, ``log_vars``, \
                 ``num_samples``.
-
                 - ``loss`` is a tensor for back propagation, which can be a \
                 weighted sum of multiple losses.
                 - ``log_vars`` contains all the variables to be sent to the
@@ -254,7 +231,6 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
 
     def val_step(self, data, optimizer):
         """The iteration step during validation.
-
         This method shares the same signature as :func:`train_step`, but used
         during val epochs. Note that the evaluation after training epochs is
         not implemented with this method, but an evaluation hook.
@@ -281,7 +257,6 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
                     wait_time=0,
                     out_file=None):
         """Draw `result` over `img`.
-
         Args:
             img (str or Tensor): The image to be displayed.
             result (Tensor or tuple): The results to draw over `img`
@@ -304,7 +279,6 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
                 Default: False.
             out_file (str or None): The filename to write the image.
                 Default: None.
-
         Returns:
             img (Tensor): Only if not `show` or `out_file`
         """

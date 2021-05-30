@@ -473,8 +473,10 @@ class RandomShift(object):
 
     def __call__(self, results):
         """Call function to random shift images, bounding boxes.
+
         Args:
             results (dict): Result dict from loading pipeline.
+
         Returns:
             dict: Shift results.
         """

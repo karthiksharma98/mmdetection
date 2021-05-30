@@ -2,7 +2,6 @@ from nntime import set_global_sync, time_this, timer_start, timer_end, export_ti
 set_global_sync(True)
 
 import torch
-import torch.nn as nn
 
 from mmdet.core import bbox2result
 from ..builder import DETECTORS, build_backbone, build_head, build_neck
@@ -12,7 +11,6 @@ from .base import BaseDetector
 @DETECTORS.register_module()
 class SingleStageDetector(BaseDetector):
     """Base class for single-stage detectors.
-
     Single-stage detectors directly and densely predict bounding boxes on the
     output features of the backbone+neck.
     """
@@ -23,8 +21,10 @@ class SingleStageDetector(BaseDetector):
                  bbox_head=None,
                  train_cfg=None,
                  test_cfg=None,
-                 pretrained=None):
-        super(SingleStageDetector, self).__init__()
+                 pretrained=None,
+                 init_cfg=None):
+        super(SingleStageDetector, self).__init__(init_cfg)
+        backbone.pretrained = pretrained
         self.backbone = build_backbone(backbone)
         if neck is not None:
             self.neck = build_neck(neck)
@@ -33,25 +33,7 @@ class SingleStageDetector(BaseDetector):
         self.bbox_head = build_head(bbox_head)
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.init_weights(pretrained=pretrained)
 
-    def init_weights(self, pretrained=None):
-        """Initialize the weights in detector.
-
-        Args:
-            pretrained (str, optional): Path to pre-trained weights.
-                Defaults to None.
-        """
-        super(SingleStageDetector, self).init_weights(pretrained)
-        self.backbone.init_weights(pretrained=pretrained)
-        if self.with_neck:
-            if isinstance(self.neck, nn.Sequential):
-                for m in self.neck:
-                    m.init_weights()
-            else:
-                self.neck.init_weights()
-        self.bbox_head.init_weights()
-    
     def extract_feat(self, img):
         """Directly extract features from the backbone+neck."""
 
@@ -66,7 +48,6 @@ class SingleStageDetector(BaseDetector):
 
     def forward_dummy(self, img):
         """Used for computing network flops.
-
         See `mmdetection/tools/analysis_tools/get_flops.py`
         """
         x = self.extract_feat(img)
@@ -93,7 +74,6 @@ class SingleStageDetector(BaseDetector):
             gt_labels (list[Tensor]): Class indices corresponding to each box
             gt_bboxes_ignore (None | list[Tensor]): Specify which bounding
                 boxes can be ignored when computing the loss.
-
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
@@ -106,13 +86,11 @@ class SingleStageDetector(BaseDetector):
     @time_this()
     def simple_test(self, img, img_metas, rescale=False):
         """Test function without test time augmentation.
-
         Args:
             imgs (list[torch.Tensor]): List of multiple images
             img_metas (list[dict]): List of image information.
             rescale (bool, optional): Whether to rescale the results.
                 Defaults to False.
-
         Returns:
             list[list[np.ndarray]]: BBox results of each image and classes.
                 The outer list corresponds to each image. The inner list
@@ -120,7 +98,8 @@ class SingleStageDetector(BaseDetector):
         """
         x = self.extract_feat(img)
         timer_start(self, 'head')
-        outs = self.bbox_head(x)
+        outs = self.bbox_head(x) # out: 1, 400, 25, 34
+        print(outs[0][0].shape, outs[1][0].shape)
         timer_end(self, 'head')
 
         timer_start(self, 'post-proc')
@@ -129,9 +108,11 @@ class SingleStageDetector(BaseDetector):
             # get shape as tensor
             img_shape = torch._shape_as_tensor(img)[2:]
             img_metas[0]['img_shape_for_onnx'] = img_shape
+        timer_start(self, 'post-proc-getbbox')
         bbox_list = self.bbox_head.get_bboxes(
             *outs, img_metas, rescale=rescale)
         # skip post-processing when exporting to ONNX
+        timer_end(self, 'post-proc-getbbox')
         if torch.onnx.is_in_onnx_export():
             return bbox_list
 
@@ -140,11 +121,10 @@ class SingleStageDetector(BaseDetector):
             for det_bboxes, det_labels in bbox_list
         ]
         timer_end(self, 'post-proc')
-        return bbox_results
+        return bbox_results # 1, 80, 0
 
     def aug_test(self, imgs, img_metas, rescale=False):
         """Test function with test time augmentation.
-
         Args:
             imgs (list[Tensor]): the outer list indicates test-time
                 augmentations and inner Tensor should have a shape NxCxHxW,
@@ -154,7 +134,6 @@ class SingleStageDetector(BaseDetector):
                 images in a batch. each dict has image information.
             rescale (bool, optional): Whether to rescale the results.
                 Defaults to False.
-
         Returns:
             list[list[np.ndarray]]: BBox results of each image and classes.
                 The outer list corresponds to each image. The inner list

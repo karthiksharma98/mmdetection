@@ -1,0 +1,8 @@
+configs/repdet/repdet_repvgg_b1g2_fpn_retinahead_1x_coco.py img_size= 1333,800
+Mean runtime (ms):  98.69683626946062 , std=  21.995714001599023
+
+
+configs/repdet/repdet_repvgg_b1g2_fpn_retinahead_1x_coco.py img_size= 1333,800
+Mean runtime (ms):  87.21644182223827 , std=  21.900145636540064
+
+

@@ -2,7 +2,6 @@ import torch.nn as nn
 from mmcv.cnn import (ConvModule, caffe2_xavier_init, constant_init, is_norm,
                       normal_init)
 from torch.nn import BatchNorm2d
-
 from ..builder import NECKS
 
 
@@ -100,3 +99,21 @@ class DilatedEncoder(nn.Module):
         out = self.lateral_norm(self.lateral_conv(feature[-1]))
         out = self.fpn_norm(self.fpn_conv(out))
         return self.dilated_encoder_blocks(out),
+
+
+def main():
+    import torch
+    input = [torch.randn(1, 2048, 128, 128)]
+    model = DilatedEncoder(
+        in_channels=2048,
+        out_channels=512,
+        block_mid_channels=128,
+        num_residual_blocks=4,
+    )
+    output = model(input)
+    print(output.shape)
+
+
+if __name__ == '__main__':
+    main()
+    

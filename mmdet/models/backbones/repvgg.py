@@ -54,10 +54,10 @@ model_param = {
 }
 
 
-def conv_bn(in_channels, out_channels, kernel_size, stride, padding, groups=1):
+def conv_bn(in_channels, out_channels, kernel_size, stride, padding, dilation=1, groups=1):
     result = nn.Sequential()
     result.add_module('conv', nn.Conv2d(in_channels=in_channels, out_channels=out_channels,
-                                        kernel_size=kernel_size, stride=stride, padding=padding, groups=groups,
+                                        kernel_size=kernel_size, stride=stride, padding=padding, groups=groups, dilation=dilation,
                                         bias=False))
     result.add_module('bn', nn.BatchNorm2d(num_features=out_channels))
     return result
@@ -89,9 +89,10 @@ class RepVGGConvModule(nn.Module):
         self.in_channels = in_channels
 
         assert kernel_size == 3
-        assert padding == 1
+        # assert padding == 1
 
-        padding_11 = padding - kernel_size // 2
+        # padding_11 = padding - kernel_size // 2
+        padding_11 = 1 - kernel_size // 2
 
         # build activation layer
         if self.activation:
@@ -107,8 +108,8 @@ class RepVGGConvModule(nn.Module):
             self.rbr_identity = nn.BatchNorm2d(
                 num_features=in_channels) if out_channels == in_channels and stride == 1 else None
 
-            self.rbr_dense = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups)
-            self.rbr_1x1 = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, padding=padding_11, groups=groups)
+            self.rbr_dense = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=kernel_size, stride=stride, padding=padding, groups=groups, dilation=dilation)
+            self.rbr_1x1 = conv_bn(in_channels=in_channels, out_channels=out_channels, kernel_size=1, stride=stride, padding=padding_11, groups=groups, dilation=dilation)
             print('RepVGG Block, identity = ', self.rbr_identity)
 
     def forward(self, inputs):
@@ -178,7 +179,9 @@ class RepVGG(nn.Module):
                  out_stages=(1, 2, 3, 4),
                  activation='ReLU',
                  deploy=False,
-                 last_channel=None):
+                 last_channel=None,
+                 freeze_first_stage=False,
+                 pretrained=None):
         super(RepVGG, self).__init__()
         model_name = 'RepVGG-' + arch
         num_blocks = model_param[model_name]['num_blocks']
@@ -188,6 +191,7 @@ class RepVGG(nn.Module):
         self.activation = activation
         self.deploy = deploy
         self.override_groups_map = model_param[model_name]['override_groups_map'] or dict()
+        self.pretrained = pretrained
 
         assert 0 not in self.override_groups_map
 
@@ -201,6 +205,11 @@ class RepVGG(nn.Module):
         self.stage3 = self._make_stage(int(256 * width_multiplier[2]), num_blocks[2], stride=2)
         out_planes = last_channel if last_channel else int(512 * width_multiplier[3])
         self.stage4 = self._make_stage(out_planes, num_blocks[3], stride=2)
+
+        if freeze_first_stage:
+            self.stage1.eval()
+            for param in self.stage1.parameters():
+                param.requires_grad = False
 
     def _make_stage(self, planes, num_blocks, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -224,17 +233,17 @@ class RepVGG(nn.Module):
                 output.append(x)
         return tuple(output)
     
-    def init_weights(self, pretrained=None):
+    def init_weights(self):
         """Initialize the weights in backbone.
 
         Args:
             pretrained (str, optional): Path to pre-trained weights.
                 Defaults to None.
         """
-        if isinstance(pretrained, str):
+        if isinstance(self.pretrained, str):
             logger = get_root_logger()
-            load_checkpoint(self, pretrained, strict=False, logger=logger)
-        elif pretrained is None:
+            load_checkpoint(self, self.pretrained, strict=False, logger=logger)
+        elif self.pretrained is None:
             for m in self.modules():
                 print(m)
                 if isinstance(m, nn.Conv2d):
@@ -273,20 +282,75 @@ def repvgg_model_convert(model, deploy_model, save_path=None):
     return deploy_model
 
 
-def repvgg_det_model_convert(model, deploy_model):
+def repvgg_det_model_convert(model, deploy_model, deploy_backbone=True, deploy_neck=False, deploy_head=False):
     print("repvgg_det_model_convert: Converting repvgg model")
     converted_weights = {}
     deploy_model.load_state_dict(model.state_dict(), strict=False)
-    for name, module in model.backbone.named_modules():
-        if hasattr(module, 'repvgg_convert'):
-            kernel, bias = module.repvgg_convert()
-            converted_weights[name + '.rbr_reparam.weight'] = kernel
-            converted_weights[name + '.rbr_reparam.bias'] = bias
-        elif isinstance(module, torch.nn.Linear):
-            converted_weights[name + '.weight'] = module.weight.detach().cpu().numpy()
-            converted_weights[name + '.bias'] = module.bias.detach().cpu().numpy()
+    if deploy_backbone:
+        for name, module in model.backbone.named_modules():
+            if hasattr(module, 'repvgg_convert'):
+                kernel, bias = module.repvgg_convert()
+                converted_weights[name + '.rbr_reparam.weight'] = kernel
+                converted_weights[name + '.rbr_reparam.bias'] = bias
+            elif isinstance(module, torch.nn.Linear):
+                converted_weights[name + '.weight'] = module.weight.detach().cpu().numpy()
+                converted_weights[name + '.bias'] = module.bias.detach().cpu().numpy()
+
+    if deploy_neck:
+        for name, module in model.neck.named_modules():
+            if hasattr(module, 'repvgg_convert'):
+                kernel, bias = module.repvgg_convert()
+                converted_weights[name + '.rbr_reparam.weight'] = kernel
+                converted_weights[name + '.rbr_reparam.bias'] = bias
+            elif isinstance(module, torch.nn.Linear):
+                converted_weights[name + '.weight'] = module.weight.detach().cpu().numpy()
+                converted_weights[name + '.bias'] = module.bias.detach().cpu().numpy()
+
+    if deploy_head:
+        for name, module in model.bbox_head.named_modules():
+            if hasattr(module, 'repvgg_convert'):
+                kernel, bias = module.repvgg_convert()
+                converted_weights[name + '.rbr_reparam.weight'] = kernel
+                converted_weights[name + '.rbr_reparam.bias'] = bias
+            elif isinstance(module, torch.nn.Linear):
+                converted_weights[name + '.weight'] = module.weight.detach().cpu().numpy()
+                converted_weights[name + '.bias'] = module.bias.detach().cpu().numpy()
+
     del model
-    for name, param in deploy_model.backbone.named_parameters():
-        print('deploy param: ', name, param.size(), np.mean(converted_weights[name]))
-        param.data = torch.from_numpy(converted_weights[name]).float()
+    if deploy_backbone:
+        for name, param in deploy_model.backbone.named_parameters():
+            print('deploy param: ', name, param.size(), np.mean(converted_weights[name]))
+            param.data = torch.from_numpy(converted_weights[name]).float()
+    if deploy_neck:
+        for name, param in deploy_model.neck.named_parameters():
+            print('deploy param: ', name, param.size(), np.mean(converted_weights[name]))
+            param.data = torch.from_numpy(converted_weights[name]).float()
+    if deploy_head:
+        for name, param in deploy_model.bbox_head.named_parameters():
+            if name not in converted_weights:
+                continue
+            print('deploy param: ', name, param.size(), np.mean(converted_weights[name]))
+            param.data = torch.from_numpy(converted_weights[name]).float()
     return deploy_model
+
+
+def main():
+    input = torch.randn(1, 2048, 128, 128)
+    model = RepVGGConvModule(
+                 in_channels=2048,
+                 out_channels=512,
+                 kernel_size=3,
+                 stride=1,
+                 padding=1,
+                 dilation=1,
+                 groups=1,
+                 activation='ReLU',
+                 padding_mode='zeros',
+                 deploy=False)
+    output = model(input)
+    print(output.shape)
+
+
+if __name__ == '__main__':
+    main()
+    

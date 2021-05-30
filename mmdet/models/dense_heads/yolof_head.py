@@ -17,9 +17,11 @@ def levels_to_images(mlvl_tensor):
     Convert the shape of each element in mlvl_tensor from (N, C, H, W) to
     (N, H*W , C), then split the element to N elements with shape (H*W, C), and
     concat elements in same image of all level along first dimension.
+
     Args:
         mlvl_tensor (list[torch.Tensor]): list of Tensor which collect from
             corresponding level. Each element is of shape (N, C, H, W)
+
     Returns:
         list[torch.Tensor]: A list that contains N tensors and each tensor is
             of shape (num_elements, C)
@@ -120,7 +122,12 @@ class YOLOFHead(AnchorHead):
         bbox_reg = self.bbox_pred(reg_feat)
         objectness = self.object_pred(reg_feat)
 
-        # implicit objectness
+        # # implicit objectness
+        if self.fp16_enabled:
+            INF = 6.55e4
+        else:
+            INF = 1e8
+
         objectness = objectness.view(N, -1, 1, H, W)
         normalized_cls_score = cls_score + objectness - torch.log(
             1. + torch.clamp(cls_score.exp(), max=INF) +
@@ -245,8 +252,10 @@ class YOLOFHead(AnchorHead):
             label_channels (int): Channel of label.
             unmap_outputs (bool): Whether to map outputs back to the original
                 set of anchors.
+
         Returns:
             tuple: Usually returns a tuple containing learning targets.
+
                 - batch_labels (Tensor): Label of all images. Each element \
                     of is a tensor of shape (batch, h * w * num_anchors)
                 - batch_label_weights (Tensor): Label weights of all images \

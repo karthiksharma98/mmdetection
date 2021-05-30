@@ -6,7 +6,7 @@ _base_ = [
 # model settings
 model = dict(
     type='RepDet',
-    pretrained='/raid/sjx/mmdetection/pretrained_models/RepVGG/RepVGG-B1g2-train.pth',
+    pretrained='pretrained_models/RepVGG/RepVGG-B1g2-train.pth',
     backbone=dict(
         type='RepVGG',
         arch='B1g2',

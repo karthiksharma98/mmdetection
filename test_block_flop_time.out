@@ -1,0 +1,300 @@
+RepVGG Block, identity =  BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+RepVGGConvModule(
+  41.955 M, 100.000% Params, 131.578 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_identity): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (rbr_dense): Sequential(
+    37.753 M, 89.983% Params, 118.393 GFLOPs, 89.979% FLOPs, 
+    (conv): Conv2d(37.749 M, 89.974% Params, 118.38 GFLOPs, 89.969% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (rbr_1x1): Sequential(
+    4.198 M, 10.007% Params, 13.166 GFLOPs, 10.006% FLOPs, 
+    (conv): Conv2d(4.194 M, 9.997% Params, 13.153 GFLOPs, 9.997% FLOPs, 2048, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: False
+Dilation: 1
+Flops: 131.58 GFLOPs
+Params: 41.96 M
+Time: 1.0826349258422852 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGG Block, identity =  BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+RepVGGConvModule(
+  41.955 M, 100.000% Params, 131.578 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_identity): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (rbr_dense): Sequential(
+    37.753 M, 89.983% Params, 118.393 GFLOPs, 89.979% FLOPs, 
+    (conv): Conv2d(37.749 M, 89.974% Params, 118.38 GFLOPs, 89.969% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (rbr_1x1): Sequential(
+    4.198 M, 10.007% Params, 13.166 GFLOPs, 10.006% FLOPs, 
+    (conv): Conv2d(4.194 M, 9.997% Params, 13.153 GFLOPs, 9.997% FLOPs, 2048, 2048, kernel_size=(1, 1), stride=(1, 1), dilation=(2, 2), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: False
+Dilation: 2
+Flops: 131.58 GFLOPs
+Params: 41.96 M
+Time: 0.9374380111694336 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGG Block, identity =  BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+RepVGGConvModule(
+  41.955 M, 100.000% Params, 131.578 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_identity): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (rbr_dense): Sequential(
+    37.753 M, 89.983% Params, 118.393 GFLOPs, 89.979% FLOPs, 
+    (conv): Conv2d(37.749 M, 89.974% Params, 118.38 GFLOPs, 89.969% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(4, 4), dilation=(4, 4), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (rbr_1x1): Sequential(
+    4.198 M, 10.007% Params, 13.166 GFLOPs, 10.006% FLOPs, 
+    (conv): Conv2d(4.194 M, 9.997% Params, 13.153 GFLOPs, 9.997% FLOPs, 2048, 2048, kernel_size=(1, 1), stride=(1, 1), dilation=(4, 4), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: False
+Dilation: 4
+Flops: 131.58 GFLOPs
+Params: 41.96 M
+Time: 0.8035421371459961 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGG Block, identity =  BatchNorm2d(2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+RepVGGConvModule(
+  41.955 M, 100.000% Params, 131.578 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_identity): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  (rbr_dense): Sequential(
+    37.753 M, 89.983% Params, 118.393 GFLOPs, 89.979% FLOPs, 
+    (conv): Conv2d(37.749 M, 89.974% Params, 118.38 GFLOPs, 89.969% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(8, 8), dilation=(8, 8), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+  (rbr_1x1): Sequential(
+    4.198 M, 10.007% Params, 13.166 GFLOPs, 10.006% FLOPs, 
+    (conv): Conv2d(4.194 M, 9.997% Params, 13.153 GFLOPs, 9.997% FLOPs, 2048, 2048, kernel_size=(1, 1), stride=(1, 1), dilation=(8, 8), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.010% Params, 0.013 GFLOPs, 0.010% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: False
+Dilation: 8
+Flops: 131.58 GFLOPs
+Params: 41.96 M
+Time: 0.6169319152832031 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGGConvModule(
+  37.751 M, 100.000% Params, 118.393 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_reparam): Conv2d(37.751 M, 100.000% Params, 118.386 GFLOPs, 99.995% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: True
+Dilation: 1
+Flops: 118.39 GFLOPs
+Params: 37.75 M
+Time: 0.18463134765625 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGGConvModule(
+  37.751 M, 100.000% Params, 118.393 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_reparam): Conv2d(37.751 M, 100.000% Params, 118.386 GFLOPs, 99.995% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2))
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: True
+Dilation: 2
+Flops: 118.39 GFLOPs
+Params: 37.75 M
+Time: 0.3221750259399414 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGGConvModule(
+  37.751 M, 100.000% Params, 118.393 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_reparam): Conv2d(37.751 M, 100.000% Params, 118.386 GFLOPs, 99.995% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(4, 4), dilation=(4, 4))
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: True
+Dilation: 4
+Flops: 118.39 GFLOPs
+Params: 37.75 M
+Time: 0.3071784973144531 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+RepVGGConvModule(
+  37.751 M, 100.000% Params, 118.393 GFLOPs, 100.000% FLOPs, 
+  (act): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.005% FLOPs, inplace=True)
+  (rbr_reparam): Conv2d(37.751 M, 100.000% Params, 118.386 GFLOPs, 99.995% FLOPs, 2048, 2048, kernel_size=(3, 3), stride=(1, 1), padding=(8, 8), dilation=(8, 8))
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: repblock
+Deploy: True
+Dilation: 8
+Flops: 118.39 GFLOPs
+Params: 37.75 M
+Time: 0.24390220642089844 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+Bottleneck(
+  4.463 M, 100.000% Params, 14.004 GFLOPs, 100.000% FLOPs, 
+  (conv1): ConvModule(
+    1.05 M, 23.520% Params, 3.293 GFLOPs, 23.515% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv2): ConvModule(
+    2.36 M, 52.891% Params, 7.404 GFLOPs, 52.866% FLOPs, 
+    (conv): Conv2d(2.359 M, 52.868% Params, 7.399 GFLOPs, 52.832% FLOPs, 512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv3): ConvModule(
+    1.053 M, 23.589% Params, 3.308 GFLOPs, 23.618% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.092% Params, 0.013 GFLOPs, 0.092% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.046% FLOPs, inplace=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: bottleneck
+Deploy: False
+Dilation: 1
+Flops: 14.0 GFLOPs
+Params: 4.46 M
+Time: 0.8177757263183594 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+Bottleneck(
+  4.463 M, 100.000% Params, 14.004 GFLOPs, 100.000% FLOPs, 
+  (conv1): ConvModule(
+    1.05 M, 23.520% Params, 3.293 GFLOPs, 23.515% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv2): ConvModule(
+    2.36 M, 52.891% Params, 7.404 GFLOPs, 52.866% FLOPs, 
+    (conv): Conv2d(2.359 M, 52.868% Params, 7.399 GFLOPs, 52.832% FLOPs, 512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(2, 2), dilation=(2, 2), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv3): ConvModule(
+    1.053 M, 23.589% Params, 3.308 GFLOPs, 23.618% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.092% Params, 0.013 GFLOPs, 0.092% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.046% FLOPs, inplace=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: bottleneck
+Deploy: False
+Dilation: 2
+Flops: 14.0 GFLOPs
+Params: 4.46 M
+Time: 1.1168241500854492 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+Bottleneck(
+  4.463 M, 100.000% Params, 14.004 GFLOPs, 100.000% FLOPs, 
+  (conv1): ConvModule(
+    1.05 M, 23.520% Params, 3.293 GFLOPs, 23.515% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv2): ConvModule(
+    2.36 M, 52.891% Params, 7.404 GFLOPs, 52.866% FLOPs, 
+    (conv): Conv2d(2.359 M, 52.868% Params, 7.399 GFLOPs, 52.832% FLOPs, 512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(4, 4), dilation=(4, 4), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv3): ConvModule(
+    1.053 M, 23.589% Params, 3.308 GFLOPs, 23.618% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.092% Params, 0.013 GFLOPs, 0.092% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.046% FLOPs, inplace=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: bottleneck
+Deploy: False
+Dilation: 4
+Flops: 14.0 GFLOPs
+Params: 4.46 M
+Time: 0.8029699325561523 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
+Bottleneck(
+  4.463 M, 100.000% Params, 14.004 GFLOPs, 100.000% FLOPs, 
+  (conv1): ConvModule(
+    1.05 M, 23.520% Params, 3.293 GFLOPs, 23.515% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 2048, 512, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv2): ConvModule(
+    2.36 M, 52.891% Params, 7.404 GFLOPs, 52.866% FLOPs, 
+    (conv): Conv2d(2.359 M, 52.868% Params, 7.399 GFLOPs, 52.832% FLOPs, 512, 512, kernel_size=(3, 3), stride=(1, 1), padding=(8, 8), dilation=(8, 8), bias=False)
+    (bn): BatchNorm2d(0.001 M, 0.023% Params, 0.003 GFLOPs, 0.023% FLOPs, 512, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.002 GFLOPs, 0.011% FLOPs, inplace=True)
+  )
+  (conv3): ConvModule(
+    1.053 M, 23.589% Params, 3.308 GFLOPs, 23.618% FLOPs, 
+    (conv): Conv2d(1.049 M, 23.497% Params, 3.288 GFLOPs, 23.481% FLOPs, 512, 2048, kernel_size=(1, 1), stride=(1, 1), bias=False)
+    (bn): BatchNorm2d(0.004 M, 0.092% Params, 0.013 GFLOPs, 0.092% FLOPs, 2048, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (activate): ReLU(0.0 M, 0.000% Params, 0.006 GFLOPs, 0.046% FLOPs, inplace=True)
+  )
+)
+==============================
+Input shape: (2048, 56, 56)
+Model: bottleneck
+Deploy: False
+Dilation: 8
+Flops: 14.0 GFLOPs
+Params: 4.46 M
+Time: 0.75531005859375 ms
+==============================
+
+!!!Please be cautious if you use the results in papers. You may need to check if all ops are supported and verify that the flops computation is correct.
